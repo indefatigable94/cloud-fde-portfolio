@@ -62,5 +62,5 @@ Deployment pipelines must detect degraded states and recover without manual oper
 
 I configure automated rollback triggers based on three signals:
 1. **Unhealthy Host Count:** If newly deployed containers fail target group health checks within three minutes, the deployment halts and rolls back to the previous stable task definition.
-2. **Elevated 5xx Response Errors:** CloudWatch alarms track HTTP 5xx error spikes and trigger an automatic rollback when error rates exceed 1% over a two-minute window.
+2. **High 5xx Response Errors:** CloudWatch alarms track HTTP 5xx error spikes and trigger an automatic rollback when error rates exceed 1% over a two-minute window.
 3. **Synthetic Endpoint Verification:** Post-deployment smoke test scripts query critical application routes. Any non-200 response triggers an immediate rollback.
