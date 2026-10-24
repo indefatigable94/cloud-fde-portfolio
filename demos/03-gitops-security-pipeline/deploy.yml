@@ -1,0 +1,55 @@
+name: CI/CD Pipeline & Shift-Left Security
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  validate-and-scan:
+    name: Lint & Security Scan
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: 1.5.7
+
+      - name: Terraform Format Check
+        run: terraform fmt -check -recursive
+
+      - name: Run tfsec Security Analysis
+        uses: aquasecurity/tfsec-action@v1.0.0
+        with:
+          soft_fail: false
+
+      - name: Run Checkov Compliance Scan
+        uses: bridgecrewio/checkov-action@master
+        with:
+          framework: terraform
+          soft_fail: false
+
+  smoke-test-and-verify:
+    name: Deployment Verification & Smoke Test
+    needs: validate-and-scan
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Run Smoke Test Script
+        run: |
+          chmod +x demos/03-gitops-security-pipeline/scripts/smoke_test.sh
+          # Simulated local mock health check
+          python3 -m http.server 8080 &
+          PID=$!
+          sleep 2
+          demos/03-gitops-security-pipeline/scripts/smoke_test.sh http://localhost:8080/
+          kill $PID
