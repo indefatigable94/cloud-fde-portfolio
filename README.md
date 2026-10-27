@@ -1,7 +1,7 @@
-# Cloud Architecture and Forward-Deployed Engineering Portfolio
+# Cloud Architecture & Forward-Deployed Engineering Portfolio
 
-Practical cloud systems, client deployment patterns, and operational resilience playbooks.
-Authored by Habib (Habeeb) Olajide.
+Practical cloud systems, client deployment patterns, and operational resilience playbooks.  
+Authored by Habib Olajide.
 
 ---
 
@@ -11,7 +11,7 @@ I build and support cloud systems that stay up, stay compliant, and recover fast
 
 My background spans emergency medical response, regulated healthcare compliance, and hands-on systems engineering. Working as an EMT and an onsite medical responder at Amazon taught me how to triage under pressure, follow protocols, and communicate clearly during incidents. My compliance background includes managing regulated client data with zero audit citations across New Jersey state reviews.
 
-This portfolio demonstrates how I apply those operational principles to cloud infrastructure as an Associate Forward-Deployed Engineer (FDE) or Junior Cloud Architect.
+This portfolio documents practical production patterns for Associate Forward-Deployed Engineer (FDE) and Junior Cloud Architect roles.
 
 ---
 
@@ -28,7 +28,7 @@ This portfolio demonstrates how I apply those operational principles to cloud in
 │                              │ replication, failover drills │
 ├──────────────────────────────┼──────────────────────────────┤
 │ 3. Managed Environments      │ Container workloads (ECS),   │
-│                              │ VPC isolation, least-privilege│
+│                              │ VPC isolation, least-priv    │
 ├──────────────────────────────┼──────────────────────────────┤
 │ 4. CI/CD & Shift-Left Sec    │ Linting, automated security  │
 │                              │ scans, rollbacks, GitOps     │
@@ -44,8 +44,8 @@ This portfolio demonstrates how I apply those operational principles to cloud in
 
 ### 1. [Resilient Ingestion Gateway (Associate FDE Demo)](demos/01-resilient-ingestion-fde/)
 - **Business Problem:** Client webhooks and third-party partner data drop during database maintenance or downstream outages.
-- **Architecture:** API Gateway directly backed by AWS SQS with a Dead Letter Queue (DLQ), decoupled Lambda processing worker, and DynamoDB storage.
-- **Operational Outcome:** Zero dropped transactions during downstream outages. Messages queue automatically and process cleanly once the database recovers.
+- **Architecture:** API Gateway backed directly by AWS SQS with an S3 Dead-Letter Queue (DLQ), decoupled Lambda processing worker, and DynamoDB storage.
+- **Operational Outcome:** Zero dropped transactions during downstream outages. Messages queue automatically and process with exponential backoff once the database recovers.
 
 ### 2. [Regulated Multi-AZ Platform & Disaster Recovery (Cloud Architect Demo)](demos/02-regulated-multi-az-platform/)
 - **Business Problem:** Regulated applications need 99.9% availability, isolated network tiers, and verified disaster recovery procedures.
@@ -56,6 +56,16 @@ This portfolio demonstrates how I apply those operational principles to cloud in
 - **Business Problem:** Misconfigured security groups, hardcoded credentials, and broken builds reach production environments without automated gates.
 - **Architecture:** GitHub Actions pipeline running Terraform validation (`terraform fmt`, `tflint`), static security scanning (`tfsec`, `checkov`), container image vulnerability checks (`trivy`), zero-downtime rolling deployment, and automated health check verification.
 - **Operational Outcome:** High-risk pull requests fail early before reaching staging or production.
+
+### 4. [Regulated Healthcare Policy & Audit Copilot (Grounded Enterprise RAG)](demos/04-regulated-policy-rag/)
+- **Business Problem:** Healthcare staff waste hours searching state regulations, while raw LLMs hallucinate compliance rules and risk audit fines.
+- **Architecture:** Hybrid retrieval (BM25 lexical + dense vector embeddings) over state DHS/DDD regulatory manuals with strict jurisdiction filtering and deterministic citation verification.
+- **Operational Outcome:** Blocks model output if citation cannot be verified against authoritative source context. Fails closed to a compliance officer when confidence falls below 0.82.
+
+### 5. [Two-Tier Automated Intake Gate (Deterministic Rules + Scoped LLM)](demos/05-hybrid-intake-gate/)
+- **Business Problem:** Routing 100% of customer tickets to an LLM creates unnecessary API costs, adds 2-second latency delays, and risks PII exposure.
+- **Architecture:** Pydantic schema validation and regex filters handle 80% of standard records in 12ms at $0.00001. Only unstructured exceptions route to a scoped model endpoint.
+- **Operational Outcome:** Cuts token spend by 80% while hashing customer PII locally with SHA-256 before any data reaches external logs.
 
 ---
 
