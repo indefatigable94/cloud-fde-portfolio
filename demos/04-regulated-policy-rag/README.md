@@ -1,70 +1,62 @@
-# Demo 04: Regulated Healthcare Policy & Audit Copilot (Grounded Enterprise RAG)
+# Demo 04: The Rulebook Search Tool (Grounded Enterprise RAG)
 
 **Author:** Habib Olajide (Cloud & AI Solutions Engineer / Associate FDE)  
 **Target Roles:** Associate Forward-Deployed Engineer, Junior Solutions Architect
 
 ---
 
-## 1. Business Problem
+## 1. Plain-English Problem & Fix
 
-In regulated healthcare operations (HIPAA, NJ DHS/DDD, OSHA), compliance coordinators and frontline managers spend dozens of hours every week manually cross-referencing policy manuals. 
+### The Problem
+Workers in healthcare and regulated companies waste hours every week digging through 400-page policy binders to answer simple compliance questions. If they ask regular ChatGPT, it makes up fake rules and gets the company fined during state inspections.
 
-When organizations deploy generic LLMs or naive vector search over these documents, models hallucinate administrative codes, cite outdated procedures, or merge distinct state regulations. In an unannounced state inspection, one hallucinated answer can trigger formal citations, fines, or facility license reviews.
+### How We Fix It
+We build a search tool that only reads the company's real rulebooks. It has to show the exact page and section code for every answer it gives. If it can't find a verified rule match in the binder, it stays quiet and asks a human compliance manager to step in.
 
 ---
 
-## 2. Architecture & System Flow
+## 2. AWS & Technical Synopsis
+
+- **Managed Compute & Database:** Deployed on **AWS ECS Fargate** (serverless containers with zero OS patching) connected to **Amazon RDS for PostgreSQL (Multi-AZ)** running `pgvector`.
+- **Hybrid Search Engine:** Combines exact keyword matching (30% weight) with vector similarity embeddings (70% weight) filtered by state jurisdiction and department metadata.
+- **Deterministic Citation Gate:** Every response is checked against two rules before the user sees it:
+  1. Similarity confidence must be `0.82` or higher.
+  2. Every cited policy code must exist inside the retrieved source chunks.
+- **Cybersecurity Controls:**
+  - **Private Network Routing:** Uses **AWS PrivateLink** so regulatory queries and model responses stay inside the private VPC and never cross the public internet.
+  - **Encryption & Access:** Data is encrypted at rest using **AWS KMS** customer-managed keys. Role-based access control (RBAC) ensures staff only query documents approved for their role.
 
 ```
-[User Query]
+[Staff Question]
      │
      ▼
-[Metadata Gate] ────► Restrict by Jurisdiction (e.g., NJ), Agency (DHS-DDD), Active Status
+[Department & State Filter] ──► (e.g., State = NJ, Agency = DHS-DDD)
      │
      ▼
-[Hybrid Retrieval] ──► 70% Dense Semantic Vectors + 30% Lexical BM25 Keyword Scoring
+[Hybrid Search (RDS pgvector)] ──► 70% Vector Match + 30% Keyword Match
      │
      ▼
-[Authoritative Context] (Top-k Passages with Exact Section Codes)
-     │
-     ▼
-[LLM Inference] (Scoped Prompt: Answer strictly using provided context)
-     │
-     ▼
-[Citation Verification Gate] ◄── Deterministic Verification
-     │
-     ├── 1. Score Threshold: Confidence >= 0.82
-     ├── 2. Code Verification: Every cited code must exist in retrieved context
-     └── 3. Text Grounding: Key claims must align with indexed policy text
-     │
-     ├── PASS ────► Return Answer with Verified Section Anchors (VERIFIED_AUDIT_READY)
-     └── FAIL ────► Fail Closed to Compliance Officer with Incident Audit Log
+[Citation Verification Gate]
+     ├── Score >= 0.82 AND Section Code Verified? ──► Return Grounded Answer
+     └── Below 0.82 OR Unverified Code?          ──► Block & Alert Compliance Officer
 ```
 
 ---
 
-## 3. Operational Guardrails
+## 3. Real-World Business Use Cases
 
-- **Fail-Closed Policy:** If a query yields low semantic similarity or cites a section code not present in the authoritative source chunks, the system blocks the output immediately.
-- **Immutable Audit Trail:** Every retrieval event, similarity score, and verification decision logs timestamped JSON for compliance review.
-- **Zero Raw PII Storage:** Queries containing patient identifiers or employee medical data are redacted locally before embedding generation.
+### Healthcare & Epic Systems Integration
+- **Faster Insurance Approvals (Prior Auth):** Insurance companies deny patient care when forms miss a specific rule code. This tool reads the payer's rulebook, pulls patient chart facts from **Epic Systems (FHIR APIs)**, and drafts the approval form with the exact policy code attached. Clinics get paid faster and patients get care on time.
+- **Zero-Citation State Audits:** Helps clinical support coordinators verify documentation rules in seconds during unannounced state inspections.
 
----
-
-## 4. Key Metrics & Outage Recovery
-
-| Metric | Target | Verified Value |
-| :--- | :--- | :--- |
-| **Citation Accuracy** | 100% | Zero unverified citations reach end users |
-| **Search Latency** | < 250ms | 45ms local hybrid retrieval |
-| **Verification Overhead** | < 20ms | 2ms deterministic verification gate |
-| **Audit Preparation Time** | < 2 hours | Reduced from 40 hours of manual search |
+### Enterprise Tech & B2B SaaS Revenue
+- **Closing Sales Deals Faster:** Big software deals often stall for 6 weeks because the buyer's security team sends over a 200-question security spreadsheet. This tool auto-completes 90% of those questions in 10 minutes using verified SOC 2 reports and security docs, helping sales teams close revenue weeks faster.
 
 ---
 
-## 5. Verification & Tests
+## 4. Verification & Test Suite
 
-Run the test suite:
+Run the local verification script:
 ```bash
 python3 policy_retrieval_guard.py
 ```
